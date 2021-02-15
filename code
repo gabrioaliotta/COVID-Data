@@ -1,0 +1,54 @@
+
+# This program parses data about the COVID-19 situation in the world - WIP
+
+import requests
+from bs4 import BeautifulSoup as bs
+
+url = 'https://covid19.who.int'
+url2 = 'https://www.worldometers.info/coronavirus/'
+who = requests.get(url)
+worlometer = requests.get(url2)
+soup = bs(who.content, 'html.parser')
+world = bs(worlometer.content, 'html.parser')
+
+if who.ok and worlometer.ok:
+    data = soup.find_all('span', class_='sc-oTmZL kIizAL')
+    print('\nCOVID-19 World Data, updated to:', data[1].string, '\n')
+    globalCases = data[2].get_text()
+    globalDeaths = soup.find('span', class_='sc-oTmZL iFsnve').get_text()
+    print(f'Global situation \nTotal cases: {globalCases} \nTotal deaths: {globalDeaths} \n-----------------')
+
+    nations = world.find_all('a', class_='mt_a', limit=20)
+
+    print('Here you have the TOP5 country by the most number of cases: ')
+    index = 0
+    while index < 5:
+
+        country_link = 'https://www.worldometers.info/coronavirus/' + nations[index].get('href')
+        link = requests.get(country_link)
+        countryPage = bs(link.content, 'html.parser')
+
+        countryCases = countryPage.find_all(class_='maincounter-number')
+        # countryCases[0] = total cases of the country
+        # countryCases[1] = total deaths of the country
+        # countryCases[2] = total recovered of the country
+
+        print(f'{nations[index].get_text()}\nTotal cases: {countryCases[0].contents[1].get_text()}\nTotal deaths: {countryCases[1].contents[1].get_text()}\n-------------')
+        index = index+1
+
+
+    country_request = input('Looking for a country?  ')
+    for nation in nations:
+        if nation.get_text().lower() == country_request.lower():
+            selected_country_link = 'https://www.worldometers.info/coronavirus/' + nation.get('href')
+            selected_link = requests.get(selected_country_link)
+            selected_countryPage = bs(selected_link.content, 'html.parser')
+
+            selected_countryCases = selected_countryPage.find_all(class_='maincounter-number')
+            print(f'{nation.get_text()}\nTotal cases: {selected_countryCases[0].contents[1].get_text()}\nTotal deaths: {selected_countryCases[1].contents[1].get_text()}\n')
+
+
+
+else:
+    print("Something went wrong! \nStatus Code: ", page.status_code)
+    
